@@ -68,6 +68,7 @@ def generate_certificates():
         return jsonify({"file_url": file_url})
 
     except Exception as e:
+        traceback.print_exc() 
         print(f"❌ 에러 발생: {e}")
         return jsonify({"error": str(e)}), 500
 
