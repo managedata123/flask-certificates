@@ -3,6 +3,7 @@ from pptx import Presentation
 import os
 import uuid
 from datetime import datetime
+import traceback
 
 app = Flask(__name__)
 
