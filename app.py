@@ -3,7 +3,6 @@ from pptx import Presentation
 import os
 import uuid
 from datetime import datetime
-import traceback
 
 app = Flask(__name__)
 
@@ -24,8 +23,10 @@ def generate_certificates():
         if not selected_rows:
             raise ValueError("선택된 행이 없습니다.")
 
-        template_path = os.path.join('static', 'certi_template.pptx')
-        print(f"📄 템플릿 경로: {template_path}")
+        # 템플릿 절대 경로
+        template_path = '/Users/mildang/flask_certificates/static/certi_template.pptx'
+        print("절대 템플릿 경로:", template_path)
+        print("템플릿 존재 여부:", os.path.exists(template_path))
 
         if not os.path.exists(template_path):
             raise FileNotFoundError("템플릿 파일이 존재하지 않습니다.")
@@ -42,24 +43,19 @@ def generate_certificates():
             slide_layout = prs.slide_layouts[0]
             slide = prs.slides.add_slide(slide_layout)
 
-            for shape in slide.shapes:
-                if not shape.has_text_frame:
-                    continue
-                text = shape.text_frame.text.strip()
-                if '성명~' in text:
-                    shape.text_frame.text = f"성명: {name}"
-                elif '과목~' in text:
-                    shape.text_frame.text = f"과목: {subject}"
-                elif '금액~' in text:
-                    shape.text_frame.text = f"금액: {amount}"
-                elif '기간~' in text:
-                    shape.text_frame.text = f"기간: {period}"
-                elif '날인일~' in text:
-                    shape.text_frame.text = f"날인일: {date_str}"
+            # 순서대로 5개의 텍스트 상자에 내용 삽입
+            shape_idx = 0
+            for value in [name, subject, amount, period, date_str]:
+                while shape_idx < len(slide.shapes):
+                    shape = slide.shapes[shape_idx]
+                    shape_idx += 1
+                    if shape.has_text_frame:
+                        shape.text_frame.text = value
+                        break
 
+        # 파일 저장
         unique_filename = f"certificate_{uuid.uuid4().hex}.pptx"
         save_path = os.path.join('static', unique_filename)
-
         prs.save(save_path)
         print(f"✅ 파일 저장 완료: {save_path}")
 
@@ -69,7 +65,6 @@ def generate_certificates():
         return jsonify({"file_url": file_url})
 
     except Exception as e:
-        traceback.print_exc() 
         print(f"❌ 에러 발생: {e}")
         return jsonify({"error": str(e)}), 500
 
