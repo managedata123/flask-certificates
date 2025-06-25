@@ -65,3 +65,5 @@ def generate_certificates():
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=10000, debug=True)
+
+print(f"파일 저장 위치: {os.path.abspath(save_path)}")
