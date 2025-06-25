@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, send_from_directory
+from flask import Flask, request, jsonify, url_for
 from pptx import Presentation
 import os
 import uuid
@@ -9,7 +9,7 @@ app = Flask(__name__)
 @app.route('/generate_certificates', methods=['POST'])
 def generate_certificates():
     try:
-        # 📌 템플릿 경로: 프로젝트 내 static 폴더 기준 상대경로
+        # 템플릿 경로: 프로젝트 내 static 폴더 기준 상대경로
         template_path = os.path.join("static", "certi_template.pptx")
         output_dir = "static"
         os.makedirs(output_dir, exist_ok=True)
@@ -30,7 +30,7 @@ def generate_certificates():
                 "fomat_name": "이 시 은",
                 "upper_subject": "영어 집중관리 프리패스",
                 "paid_amount": "280,000원",
-                "period": "25. 09. 23 ~ 26. 10. 20",
+                "period": "24. 09. 23 ~ 25. 10. 20",
             }
         ]
 
@@ -58,25 +58,17 @@ def generate_certificates():
         save_path = os.path.join(output_dir, filename)
         prs.save(save_path)
 
-        print(f"파일 저장 위치: {os.path.abspath(save_path)}")  # 파일 저장 경로 출력
+        # static 폴더 내 파일에 접근할 수 있는 외부 URL 생성
+        file_url = url_for('static', filename=filename, _external=True)
 
-        return jsonify({"message": "수강증 저장 성공", "file": filename})
+        return jsonify({
+            "message": "수강증 저장 성공",
+            "file": filename,
+            "file_url": file_url
+        })
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-# 추가: 다운로드 API
-@app.route('/download/<filename>', methods=['GET'])
-def download_file(filename):
-    output_dir = "static"
-    try:
-        file_path = os.path.join(output_dir, filename)
-        if not os.path.exists(file_path):
-            return jsonify({"error": "파일이 존재하지 않습니다."}), 404
-        return send_from_directory(output_dir, filename, as_attachment=True)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=10000, debug=True)
