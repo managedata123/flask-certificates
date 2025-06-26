@@ -48,8 +48,8 @@ def generate_certificates():
         # 첫 번째 row의 이름을 파일명에 사용
         first_name = selected_rows[0].get("fomat_name", "수강증").strip()
         # 파일명 안전하게: 특수문자 제거
-        safe_name = re.sub(r'[\\/*?:"<>|]', '', first_name)
-        filename = f"수강증_{safe_name}_{today_str}.pptx"
+        safe_name = re.sub(r'[^\w가-힣]', '', first_name)
+        filename = f"수강증_{safe_name}학생_{today_str}.pptx"
 
         save_path = os.path.join(output_dir, filename)
         prs.save(save_path)
