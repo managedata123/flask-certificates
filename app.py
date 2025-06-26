@@ -1,16 +1,16 @@
 from flask import Flask, request, jsonify, url_for
 from pptx import Presentation
 import os
-import uuid
 from datetime import datetime
+import re
 
 app = Flask(__name__)
 
 @app.route('/generate_certificates', methods=['POST'])
 def generate_certificates():
     try:
-        data = request.get_json()  # 클라이언트가 보낸 JSON 데이터 받기
-        selected_rows = data.get('selectedRows', [])  # 'selectedRows' 키로 데이터 받기
+        data = request.get_json()
+        selected_rows = data.get('selectedRows', [])
 
         if not selected_rows:
             return jsonify({"error": "선택된 행이 없습니다."}), 400
@@ -23,9 +23,10 @@ def generate_certificates():
             return jsonify({"error": f"템플릿 파일이 존재하지 않습니다: {template_path}"}), 500
 
         prs = Presentation(template_path)
+        today_str = datetime.today().strftime("%y%m%d")
 
         for row in selected_rows:
-            name = row.get("fomat_name", "")
+            name = row.get("fomat_name", "").strip()
             subject = row.get("upper_subject", "")
             amount = row.get("paid_amount", "")
             period = row.get("period", "")
@@ -41,9 +42,15 @@ def generate_certificates():
             except IndexError as e:
                 return jsonify({"error": f"텍스트박스 부족: {e}"}), 500
 
+        # 템플릿 슬라이드 제거 (맨 앞 슬라이드)
         prs.slides._sldIdLst.remove(prs.slides._sldIdLst[0])
 
-        filename = f"certificate_{uuid.uuid4().hex}.pptx"
+        # 첫 번째 row의 이름을 파일명에 사용
+        first_name = selected_rows[0].get("fomat_name", "수강증").strip()
+        # 파일명 안전하게: 특수문자 제거
+        safe_name = re.sub(r'[\\/*?:"<>|]', '', first_name)
+        filename = f"수강증_{safe_name}_{today_str}.pptx"
+
         save_path = os.path.join(output_dir, filename)
         prs.save(save_path)
 
